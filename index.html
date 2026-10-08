@@ -1,0 +1,1397 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Countries Memory Game</title>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Fredoka', sans-serif;
+    min-height: 100vh;
+    color: #fff;
+    background:
+        radial-gradient(circle at 10% 20%, rgba(0,210,255,.18), transparent 30%),
+        radial-gradient(circle at 90% 80%, rgba(120,80,255,.22), transparent 30%),
+        linear-gradient(135deg, #07152f, #102b5c 50%, #07152f);
+    overflow-x: hidden;
+}
+
+body::before {
+    content: "✈️";
+    position: fixed;
+    font-size: 120px;
+    opacity: .035;
+    top: 8%;
+    left: 4%;
+    transform: rotate(-15deg);
+    pointer-events: none;
+}
+
+body::after {
+    content: "🌎";
+    position: fixed;
+    font-size: 180px;
+    opacity: .035;
+    bottom: 4%;
+    right: 4%;
+    pointer-events: none;
+}
+
+.container {
+    width: min(1100px, 94%);
+    margin: auto;
+    padding: 25px 0 50px;
+}
+
+/* =========================
+   LOGO
+========================= */
+
+.header {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+.logo {
+    width: min(620px, 100%);
+    margin: auto;
+    display: block;
+    filter: drop-shadow(0 15px 25px rgba(0,0,0,.4));
+    animation: logoFloat 4s ease-in-out infinite;
+}
+
+@keyframes logoFloat {
+    0%, 100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-7px);
+    }
+}
+
+.subtitle {
+    color: #a9bad8;
+    font-size: 17px;
+    margin-top: 5px;
+}
+
+/* =========================
+   PAINEL
+========================= */
+
+.panel {
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.12);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 24px;
+    padding: 20px;
+    box-shadow:
+        0 20px 60px rgba(0,0,0,.25),
+        inset 0 1px rgba(255,255,255,.08);
+    margin-bottom: 25px;
+}
+
+.difficulties {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+
+.difficulty {
+    border: none;
+    padding: 15px 10px;
+    border-radius: 15px;
+    color: white;
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: .2s;
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.12);
+}
+
+.difficulty:hover {
+    transform: translateY(-3px);
+    background: rgba(255,255,255,.14);
+}
+
+.difficulty.active {
+    box-shadow: 0 8px 25px rgba(0,0,0,.3);
+}
+
+.easy.active {
+    background: linear-gradient(135deg,#00c853,#00a844);
+}
+
+.medium.active {
+    background: linear-gradient(135deg,#ffb300,#ff8f00);
+}
+
+.hard.active {
+    background: linear-gradient(135deg,#ff5252,#d50000);
+}
+
+.info {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-top: 15px;
+}
+
+.info-box {
+    background: rgba(0,0,0,.15);
+    border-radius: 14px;
+    padding: 13px;
+    text-align: center;
+}
+
+.info-label {
+    display: block;
+    color: #8fa6c9;
+    font-size: 13px;
+    margin-bottom: 3px;
+}
+
+.info-value {
+    font-size: 21px;
+    font-weight: 600;
+}
+
+.progress-container {
+    width: 100%;
+    height: 8px;
+    background: rgba(255,255,255,.08);
+    border-radius: 50px;
+    margin-top: 18px;
+    overflow: hidden;
+}
+
+.progress {
+    height: 100%;
+    width: 0%;
+    border-radius: 50px;
+    background: linear-gradient(90deg,#00d4ff,#7b61ff);
+    transition: width .4s ease;
+}
+
+.restart-container {
+    text-align: center;
+}
+
+.restart {
+    margin-top: 15px;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 12px;
+    background: white;
+    color: #102b5c;
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+    transition: .2s;
+}
+
+.restart:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 7px 20px rgba(0,0,0,.25);
+}
+
+/* =========================
+   TABULEIRO
+========================= */
+
+.board {
+    display: grid;
+    justify-content: center;
+    gap: 14px;
+    margin: 25px auto;
+}
+
+.board.easy,
+.board.medium {
+    grid-template-columns: repeat(4,minmax(70px,135px));
+}
+
+.board.hard {
+    grid-template-columns: repeat(6,minmax(60px,120px));
+}
+
+/* =========================
+   CARTAS
+========================= */
+
+.card {
+    aspect-ratio: 1 / 1.08;
+    perspective: 1000px;
+    cursor: pointer;
+}
+
+.card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+    transition: transform .6s cubic-bezier(.4,.2,.2,1);
+    border-radius: 18px;
+}
+
+.card.flipped .card-inner {
+    transform: rotateY(180deg);
+}
+
+.front,
+.back {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+/* Verso */
+
+.back {
+    background:
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,.22), transparent 30%),
+        linear-gradient(135deg,rgba(255,255,255,.18),rgba(255,255,255,.04));
+    border: 1px solid rgba(255,255,255,.2);
+    box-shadow:
+        0 10px 25px rgba(0,0,0,.25),
+        inset 0 1px rgba(255,255,255,.15);
+    transition: .25s;
+}
+
+.back::before {
+    content: "🌎";
+    font-size: clamp(30px,5vw,50px);
+    filter: drop-shadow(0 5px 8px rgba(0,0,0,.25));
+    transition: transform .3s;
+}
+
+.card:hover .back {
+    transform: translateY(-4px);
+    box-shadow:
+        0 15px 35px rgba(0,0,0,.35),
+        inset 0 1px rgba(255,255,255,.2);
+}
+
+.card:hover .back::before {
+    transform: scale(1.12) rotate(5deg);
+}
+
+/* Frente */
+
+.front {
+    transform: rotateY(180deg);
+    flex-direction: column;
+    padding: 10px;
+    background: linear-gradient(145deg,#fff,#eef5ff);
+    color: #14284b;
+    border: 2px solid rgba(255,255,255,.7);
+    box-shadow: 0 10px 30px rgba(0,0,0,.25);
+}
+
+.flag {
+    font-size: clamp(35px,5vw,60px);
+    line-height: 1;
+    margin-bottom: 8px;
+    filter: drop-shadow(0 4px 5px rgba(0,0,0,.12));
+}
+
+.country-name {
+    font-size: clamp(10px,1.5vw,15px);
+    font-weight: 600;
+    text-align: center;
+}
+
+.card.matched .front {
+    border-color: #00e676;
+    background: linear-gradient(145deg,#f1fff7,#d9ffea);
+    animation: match .5s ease;
+}
+
+@keyframes match {
+    0% {
+        transform: rotateY(180deg) scale(1);
+    }
+
+    50% {
+        transform: rotateY(180deg) scale(1.08);
+    }
+
+    100% {
+        transform: rotateY(180deg) scale(1);
+    }
+}
+
+.message {
+    text-align: center;
+    min-height: 50px;
+    margin-top: 15px;
+    font-size: 22px;
+    font-weight: 600;
+}
+
+/* =========================
+   VITÓRIA
+========================= */
+
+.win {
+    position: fixed;
+    inset: 0;
+    background: rgba(2,10,25,.78);
+    backdrop-filter: blur(10px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+}
+
+.win.show {
+    display: flex;
+}
+
+.win-card {
+    width: min(450px,90%);
+    background: linear-gradient(145deg,#172f61,#0d1d3c);
+    border: 1px solid rgba(255,255,255,.15);
+    border-radius: 28px;
+    padding: 40px 30px;
+    text-align: center;
+    box-shadow: 0 30px 100px rgba(0,0,0,.5);
+    animation: appear .4s ease;
+}
+
+@keyframes appear {
+    from {
+        transform: scale(.8);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.win-emoji {
+    font-size: 70px;
+    margin-bottom: 10px;
+}
+
+.win-card h2 {
+    font-size: 34px;
+    margin-bottom: 8px;
+}
+
+.win-card p {
+    color: #a9bad8;
+    margin-bottom: 25px;
+    line-height: 1.7;
+}
+
+.play-again {
+    border: none;
+    padding: 14px 28px;
+    border-radius: 13px;
+    background: linear-gradient(135deg,#00d4ff,#6961ff);
+    color: white;
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: .2s;
+}
+
+.play-again:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(0,0,0,.3);
+}
+
+/* =========================
+   RESPONSIVO
+========================= */
+
+@media(max-width:700px) {
+
+    .container {
+        padding-top: 10px;
+    }
+
+    .difficulties {
+        grid-template-columns: 1fr;
+    }
+
+    .board.hard {
+        grid-template-columns: repeat(4,minmax(55px,90px));
+    }
+
+    .board {
+        gap: 9px;
+    }
+
+    .card-inner,
+    .front,
+    .back {
+        border-radius: 13px;
+    }
+
+    .logo {
+        width: 100%;
+    }
+}
+
+@media(max-width:420px) {
+
+    .info-value {
+        font-size: 17px;
+    }
+
+    .info-label {
+        font-size: 11px;
+    }
+
+    .board.easy,
+    .board.medium,
+    .board.hard {
+        grid-template-columns: repeat(4,minmax(55px,75px));
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <!-- =========================
+         LOGO
+    ========================== -->
+
+    <header class="header">
+
+        <svg class="logo"
+             viewBox="0 0 800 360"
+             xmlns="http://www.w3.org/2000/svg">
+
+            <defs>
+
+                <linearGradient id="titleGradient"
+                    x1="0" y1="0" x2="1" y2="1">
+
+                    <stop offset="0%" stop-color="#ffffff"/>
+                    <stop offset="30%" stop-color="#65eaff"/>
+                    <stop offset="60%" stop-color="#9b7cff"/>
+                    <stop offset="100%" stop-color="#ffffff"/>
+
+                </linearGradient>
+
+                <linearGradient id="globeGradient"
+                    x1="0" y1="0" x2="1" y2="1">
+
+                    <stop offset="0%" stop-color="#42e8ff"/>
+                    <stop offset="50%" stop-color="#2475ff"/>
+                    <stop offset="100%" stop-color="#182d91"/>
+
+                </linearGradient>
+
+                <filter id="shadow">
+
+                    <feDropShadow
+                        dx="0"
+                        dy="10"
+                        stdDeviation="8"
+                        flood-color="#000"
+                        flood-opacity=".45"/>
+
+                </filter>
+
+            </defs>
+
+            <!-- Fundo -->
+
+            <ellipse
+                cx="400"
+                cy="315"
+                rx="300"
+                ry="25"
+                fill="#000"
+                opacity=".25"/>
+
+            <!-- Globo -->
+
+            <circle
+                cx="400"
+                cy="125"
+                r="88"
+                fill="url(#globeGradient)"
+                stroke="#ffffff"
+                stroke-width="5"
+                filter="url(#shadow)"/>
+
+            <!-- Continentes estilizados -->
+
+            <path
+                d="M340 75
+                   C320 60 315 90 330 103
+                   L350 112 360 100
+                   350 87Z"
+                fill="#42d978"/>
+
+            <path
+                d="M395 60
+                   C420 50 455 65 460 85
+                   L445 95 425 88
+                   410 105 390 92Z"
+                fill="#42d978"/>
+
+            <path
+                d="M445 115
+                   C470 110 485 130 470 145
+                   L450 140 440 128Z"
+                fill="#42d978"/>
+
+            <path
+                d="M365 125
+                   C350 140 360 155 375 165
+                   L380 190 400 200
+                   412 175 400 155 390 135Z"
+                fill="#42d978"/>
+
+            <!-- Avião -->
+
+            <text
+                x="535"
+                y="65"
+                font-size="55"
+                transform="rotate(18 535 65)">
+                ✈️
+            </text>
+
+            <!-- Torre Eiffel -->
+
+            <g transform="translate(170 95)">
+
+                <path
+                    d="M35 0 L10 110 L60 110 Z"
+                    fill="#dce8ff"
+                    stroke="#fff"
+                    stroke-width="3"/>
+
+                <path
+                    d="M22 65 H48 M16 88 H54"
+                    stroke="#5273a8"
+                    stroke-width="4"/>
+
+                <path
+                    d="M35 0 V110"
+                    stroke="#5273a8"
+                    stroke-width="3"/>
+
+            </g>
+
+            <!-- Coliseu -->
+
+            <g transform="translate(575 110)">
+
+                <path
+                    d="M0 80 Q45 50 90 80 V115 H0Z"
+                    fill="#d8b27a"
+                    stroke="#fff"
+                    stroke-width="3"/>
+
+                <path
+                    d="M10 82 V105
+                       M28 73 V105
+                       M46 70 V105
+                       M64 73 V105
+                       M82 82 V105"
+                    stroke="#8b6235"
+                    stroke-width="7"/>
+
+            </g>
+
+            <!-- Cartas -->
+
+            <g filter="url(#shadow)">
+
+                <rect
+                    x="90"
+                    y="200"
+                    width="110"
+                    height="80"
+                    rx="14"
+                    fill="#fff"
+                    transform="rotate(-12 145 240)"/>
+
+                <text
+                    x="145"
+                    y="252"
+                    text-anchor="middle"
+                    font-size="50"
+                    transform="rotate(-12 145 240)">
+                    🇧🇷
+                </text>
+
+                <rect
+                    x="600"
+                    y="205"
+                    width="110"
+                    height="80"
+                    rx="14"
+                    fill="#fff"
+                    transform="rotate(12 655 245)"/>
+
+                <text
+                    x="655"
+                    y="257"
+                    text-anchor="middle"
+                    font-size="50"
+                    transform="rotate(12 655 245)">
+                    🇺🇸
+                </text>
+
+            </g>
+
+            <!-- Título -->
+
+            <text
+                x="400"
+                y="245"
+                text-anchor="middle"
+                font-family="Fredoka, sans-serif"
+                font-size="63"
+                font-weight="700"
+                fill="url(#titleGradient)"
+                stroke="#152d63"
+                stroke-width="8"
+                paint-order="stroke"
+                filter="url(#shadow)">
+                COUNTRIES
+            </text>
+
+            <text
+                x="400"
+                y="300"
+                text-anchor="middle"
+                font-family="Fredoka, sans-serif"
+                font-size="54"
+                font-weight="700"
+                fill="url(#titleGradient)"
+                stroke="#152d63"
+                stroke-width="7"
+                paint-order="stroke">
+                MEMORY GAME
+            </text>
+
+            <!-- Faixa -->
+
+            <path
+                d="M205 325 Q400 350 595 325 L580 355 Q400 380 220 355Z"
+                fill="#ffbd35"
+                stroke="#fff"
+                stroke-width="3"/>
+
+            <text
+                x="400"
+                y="350"
+                text-anchor="middle"
+                font-family="Fredoka, sans-serif"
+                font-size="21"
+                font-weight="700"
+                fill="#17366f">
+                JOGO DA MEMÓRIA
+            </text>
+
+        </svg>
+
+        <p class="subtitle">
+            Encontre os pares e descubra o mundo!
+        </p>
+
+    </header>
+
+
+    <!-- =========================
+         PAINEL
+    ========================== -->
+
+    <section class="panel">
+
+        <div class="difficulties">
+
+            <button
+                class="difficulty easy active"
+                onclick="selecionarDificuldade(8,this)">
+
+                🟢 Fácil
+                <br>
+                <small>8 cartas</small>
+
+            </button>
+
+            <button
+                class="difficulty medium"
+                onclick="selecionarDificuldade(16,this)">
+
+                🟡 Médio
+                <br>
+                <small>16 cartas</small>
+
+            </button>
+
+            <button
+                class="difficulty hard"
+                onclick="selecionarDificuldade(24,this)">
+
+                🔴 Difícil
+                <br>
+                <small>24 cartas</small>
+
+            </button>
+
+        </div>
+
+
+        <div class="info">
+
+            <div class="info-box">
+
+                <span class="info-label">
+                    🎯 Movimentos
+                </span>
+
+                <span
+                    class="info-value"
+                    id="movimentos">
+                    0
+                </span>
+
+            </div>
+
+
+            <div class="info-box">
+
+                <span class="info-label">
+                    ⏱️ Tempo
+                </span>
+
+                <span
+                    class="info-value"
+                    id="tempo">
+                    00:00
+                </span>
+
+            </div>
+
+
+            <div class="info-box">
+
+                <span class="info-label">
+                    🏆 Pares
+                </span>
+
+                <span
+                    class="info-value"
+                    id="pares">
+                    0/4
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <div class="progress-container">
+
+            <div
+                class="progress"
+                id="progresso">
+            </div>
+
+        </div>
+
+
+        <div class="restart-container">
+
+            <button
+                class="restart"
+                onclick="reiniciarJogo()">
+
+                🔄 Novo jogo
+
+            </button>
+
+        </div>
+
+    </section>
+
+
+    <!-- =========================
+         TABULEIRO
+    ========================== -->
+
+    <main
+        id="tabuleiro"
+        class="board easy">
+    </main>
+
+
+    <div
+        id="mensagem"
+        class="message">
+    </div>
+
+</div>
+
+
+<!-- =========================
+     TELA DE VITÓRIA
+========================== -->
+
+<div
+    class="win"
+    id="vitoria">
+
+    <div class="win-card">
+
+        <div class="win-emoji">
+            🎉🌎
+        </div>
+
+        <h2>
+            Parabéns!
+        </h2>
+
+        <p id="resultado"></p>
+
+        <button
+            class="play-again"
+            onclick="fecharVitoria()">
+
+            🎮 Jogar novamente
+
+        </button>
+
+    </div>
+
+</div>
+
+
+<script>
+
+/* =========================
+   PAÍSES
+========================= */
+
+const paises = [
+
+    { nome:"Brasil", bandeira:"🇧🇷" },
+    { nome:"Estados Unidos", bandeira:"🇺🇸" },
+    { nome:"Canadá", bandeira:"🇨🇦" },
+    { nome:"México", bandeira:"🇲🇽" },
+
+    { nome:"Argentina", bandeira:"🇦🇷" },
+    { nome:"Chile", bandeira:"🇨🇱" },
+    { nome:"Colômbia", bandeira:"🇨🇴" },
+    { nome:"Peru", bandeira:"🇵🇪" },
+
+    { nome:"França", bandeira:"🇫🇷" },
+    { nome:"Alemanha", bandeira:"🇩🇪" },
+    { nome:"Itália", bandeira:"🇮🇹" },
+    { nome:"Espanha", bandeira:"🇪🇸" },
+
+    { nome:"Portugal", bandeira:"🇵🇹" },
+    { nome:"Japão", bandeira:"🇯🇵" },
+    { nome:"China", bandeira:"🇨🇳" },
+    { nome:"Coreia do Sul", bandeira:"🇰🇷" },
+
+    { nome:"Índia", bandeira:"🇮🇳" },
+    { nome:"Austrália", bandeira:"🇦🇺" },
+    { nome:"Egito", bandeira:"🇪🇬" },
+    { nome:"África do Sul", bandeira:"🇿🇦" },
+
+    { nome:"Grécia", bandeira:"🇬🇷" },
+    { nome:"Suíça", bandeira:"🇨🇭" },
+    { nome:"Noruega", bandeira:"🇳🇴" },
+    { nome:"Suécia", bandeira:"🇸🇪" }
+
+];
+
+
+/* =========================
+   VARIÁVEIS
+========================= */
+
+let cartas = [];
+
+let primeiraCarta = null;
+let segundaCarta = null;
+
+let bloqueado = false;
+
+let movimentos = 0;
+let paresEncontrados = 0;
+
+let totalCartas = 8;
+
+let segundos = 0;
+let intervalo = null;
+
+
+/* =========================
+   INICIAR JOGO
+========================= */
+
+function iniciarJogo(quantidade) {
+
+    totalCartas = quantidade;
+
+    pararCronometro();
+
+    segundos = 0;
+    movimentos = 0;
+    paresEncontrados = 0;
+
+    primeiraCarta = null;
+    segundaCarta = null;
+
+    bloqueado = false;
+
+
+    document.getElementById("movimentos").textContent = "0";
+
+    document.getElementById("tempo").textContent = "00:00";
+
+    document.getElementById("pares").textContent =
+        `0/${quantidade / 2}`;
+
+    document.getElementById("progresso").style.width = "0%";
+
+    document.getElementById("mensagem").textContent = "";
+
+
+    document
+        .getElementById("vitoria")
+        .classList
+        .remove("show");
+
+
+    const quantidadePares = quantidade / 2;
+
+
+    let selecionados =
+        [...paises]
+        .sort(() => Math.random() - 0.5)
+        .slice(0, quantidadePares);
+
+
+    cartas = [
+        ...selecionados,
+        ...selecionados
+    ];
+
+
+    cartas.sort(() => Math.random() - 0.5);
+
+
+    criarTabuleiro();
+
+    iniciarCronometro();
+
+}
+
+
+/* =========================
+   CRIAR TABULEIRO
+========================= */
+
+function criarTabuleiro() {
+
+    const tabuleiro =
+        document.getElementById("tabuleiro");
+
+
+    tabuleiro.innerHTML = "";
+
+
+    tabuleiro.className = "board";
+
+
+    if (totalCartas === 8) {
+
+        tabuleiro.classList.add("easy");
+
+    }
+
+    else if (totalCartas === 16) {
+
+        tabuleiro.classList.add("medium");
+
+    }
+
+    else {
+
+        tabuleiro.classList.add("hard");
+
+    }
+
+
+    cartas.forEach((pais) => {
+
+        const carta =
+            document.createElement("div");
+
+
+        carta.className = "card";
+
+
+        carta.dataset.nome =
+            pais.nome;
+
+
+        carta.innerHTML = `
+
+            <div class="card-inner">
+
+                <div class="back"></div>
+
+                <div class="front">
+
+                    <div class="flag">
+                        ${pais.bandeira}
+                    </div>
+
+                    <div class="country-name">
+                        ${pais.nome}
+                    </div>
+
+                </div>
+
+            </div>
+
+        `;
+
+
+        carta.addEventListener(
+            "click",
+            () => virarCarta(carta)
+        );
+
+
+        tabuleiro.appendChild(carta);
+
+    });
+
+}
+
+
+/* =========================
+   VIRAR CARTA
+========================= */
+
+function virarCarta(carta) {
+
+    if (
+        bloqueado ||
+        carta === primeiraCarta ||
+        carta.classList.contains("matched")
+    ) {
+
+        return;
+
+    }
+
+
+    carta.classList.add("flipped");
+
+
+    if (!primeiraCarta) {
+
+        primeiraCarta = carta;
+
+        return;
+
+    }
+
+
+    segundaCarta = carta;
+
+
+    movimentos++;
+
+
+    document.getElementById("movimentos")
+        .textContent = movimentos;
+
+
+    verificarPar();
+
+}
+
+
+/* =========================
+   VERIFICAR PAR
+========================= */
+
+function verificarPar() {
+
+    const mesmoPais =
+        primeiraCarta.dataset.nome ===
+        segundaCarta.dataset.nome;
+
+
+    if (mesmoPais) {
+
+        primeiraCarta.classList.add("matched");
+
+        segundaCarta.classList.add("matched");
+
+
+        paresEncontrados++;
+
+
+        atualizarProgresso();
+
+
+        resetarEscolha();
+
+
+        if (
+            paresEncontrados ===
+            totalCartas / 2
+        ) {
+
+            finalizarJogo();
+
+        }
+
+    }
+
+    else {
+
+        bloqueado = true;
+
+
+        setTimeout(() => {
+
+            primeiraCarta.classList.remove("flipped");
+
+            segundaCarta.classList.remove("flipped");
+
+            resetarEscolha();
+
+        }, 850);
+
+    }
+
+}
+
+
+/* =========================
+   PROGRESSO
+========================= */
+
+function atualizarProgresso() {
+
+    const porcentagem =
+        (paresEncontrados /
+        (totalCartas / 2)) * 100;
+
+
+    document.getElementById("progresso")
+        .style.width =
+        porcentagem + "%";
+
+
+    document.getElementById("pares")
+        .textContent =
+        `${paresEncontrados}/${totalCartas / 2}`;
+
+}
+
+
+/* =========================
+   RESETAR ESCOLHA
+========================= */
+
+function resetarEscolha() {
+
+    primeiraCarta = null;
+
+    segundaCarta = null;
+
+    bloqueado = false;
+
+}
+
+
+/* =========================
+   CRONÔMETRO
+========================= */
+
+function iniciarCronometro() {
+
+    intervalo =
+        setInterval(() => {
+
+            segundos++;
+
+
+            const minutos =
+                Math.floor(segundos / 60);
+
+
+            const segundosRestantes =
+                segundos % 60;
+
+
+            document.getElementById("tempo")
+                .textContent =
+                `${String(minutos).padStart(2,"0")}:${String(segundosRestantes).padStart(2,"0")}`;
+
+        }, 1000);
+
+}
+
+
+function pararCronometro() {
+
+    if (intervalo) {
+
+        clearInterval(intervalo);
+
+        intervalo = null;
+
+    }
+
+}
+
+
+/* =========================
+   FORMATAR TEMPO
+========================= */
+
+function formatarTempo() {
+
+    const minutos =
+        Math.floor(segundos / 60);
+
+
+    const segundosRestantes =
+        segundos % 60;
+
+
+    return `${String(minutos).padStart(2,"0")}:${String(segundosRestantes).padStart(2,"0")}`;
+
+}
+
+
+/* =========================
+   FINALIZAR JOGO
+========================= */
+
+function finalizarJogo() {
+
+    pararCronometro();
+
+
+    setTimeout(() => {
+
+        document.getElementById("resultado")
+            .innerHTML =
+
+            `Você encontrou todos os pares!<br><br>
+             🎯 ${movimentos} movimentos<br>
+             ⏱️ ${formatarTempo()}`;
+
+
+        document.getElementById("vitoria")
+            .classList
+            .add("show");
+
+    }, 500);
+
+}
+
+
+/* =========================
+   DIFICULDADE
+========================= */
+
+function selecionarDificuldade(
+    quantidade,
+    botao
+) {
+
+    document
+        .querySelectorAll(".difficulty")
+        .forEach(btn => {
+
+            btn.classList.remove("active");
+
+        });
+
+
+    botao.classList.add("active");
+
+
+    iniciarJogo(quantidade);
+
+}
+
+
+/* =========================
+   NOVO JOGO
+========================= */
+
+function reiniciarJogo() {
+
+    iniciarJogo(totalCartas);
+
+}
+
+
+/* =========================
+   FECHAR VITÓRIA
+========================= */
+
+function fecharVitoria() {
+
+    document
+        .getElementById("vitoria")
+        .classList
+        .remove("show");
+
+
+    iniciarJogo(totalCartas);
+
+}
+
+
+/* =========================
+   COMEÇAR
+========================= */
+
+iniciarJogo(8);
+
+</script>
+
+</body>
+</html>
